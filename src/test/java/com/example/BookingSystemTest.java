@@ -8,6 +8,7 @@ import java.time.LocalDateTime;
 import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.Mockito.*;
 
 class BookingSystemTest {
 
@@ -18,9 +19,9 @@ class BookingSystemTest {
 
     @BeforeEach
     void setUp() {
-        timeProvider = Mockito.mock(TimeProvider.class);
-        roomRepository = Mockito.mock(RoomRepository.class);
-        notificationService = Mockito.mock(NotificationService.class);
+        timeProvider = mock(TimeProvider.class);
+        roomRepository = mock(RoomRepository.class);
+        notificationService = mock(NotificationService.class);
 
         bookingSystem = new BookingSystem(timeProvider, roomRepository, notificationService);
     }
@@ -30,19 +31,39 @@ class BookingSystemTest {
 
         LocalDateTime now = LocalDateTime.now();
         LocalDateTime start = now.plusDays(1);
-        LocalDateTime end = now.plusDays(1).plusHours(1);
+        LocalDateTime end = start.plusHours(1);
 
-        Room room = Mockito.mock(Room.class);
-        Mockito.when(roomRepository.findById("R1")).thenReturn(Optional.of(room));
-        Mockito.when(room.isAvailable(start, end)).thenReturn(true);
-        Mockito.when(timeProvider.getCurrentTime()).thenReturn(now);
+        Room room = mock(Room.class);
+        when(timeProvider.getCurrentTime()).thenReturn(now);
+        when(roomRepository.findById("R1")).thenReturn(Optional.of(room));
+        when(room.isAvailable(start, end)).thenReturn(true);
 
         boolean result = bookingSystem.bookRoom("R1", start, end);
 
-
         assertThat(result).isTrue();
-        Mockito.verify(room).addBooking(Mockito.any());
-        Mockito.verify(roomRepository).save(room);
-        Mockito.verify(notificationService).sendBookingConfirmation(Mockito.any());
+        verify(room).addBooking(any());
+        verify(roomRepository).save(room);
+        verify(notificationService).sendBookingConfirmation(any());
+    }
+
+    @Test
+    void shouldReturnFalseWhenRoomIsNotAvailable() throws NotificationException {
+
+        LocalDateTime now = LocalDateTime.now();
+        when(timeProvider.getCurrentTime()).thenReturn(now);
+
+        Room room = mock(Room.class);
+        when(room.isAvailable(any(), any())).thenReturn(false);
+        when(roomRepository.findById("room1")).thenReturn(Optional.of(room));
+
+        boolean result = bookingSystem.bookRoom(
+                "room1",
+                now.plusHours(1),
+                now.plusHours(2)
+        );
+
+        assertThat(result).isFalse();
+        verify(room, never()).addBooking(any());
+        verify(notificationService, never()).sendBookingConfirmation(any());
     }
 }
