@@ -3,6 +3,19 @@ package com.example.payment;
 import com.example.NotificationException;
 import com.example.NotificationService;
 
+/**
+ * PaymentProcessor ansvarar för att processa betalningar via en PaymentGateway
+ * och för att notifiera användaren via NotificationService.
+ *
+ * Refaktoreringsbeslut:
+ * - PaymentGateway extraherades som beroende via konstruktor (Dependency Injection)
+ *   för att kunna mocka gateway i tester.
+ * - NotificationService injiceras via konstruktorn för att kunna verifiera
+ *   notifieringar i tester.
+ * - Exception-hantering (PaymentException och NotificationException) hanteras
+ *   på ett mer testbart sätt.
+ */
+
 public class PaymentProcessor {
 
     private final PaymentGateway gateway;
@@ -13,12 +26,6 @@ public class PaymentProcessor {
         this.notificationService = notificationService;
     }
 
-    /**
-     * Processar en betalning via gateway.
-     *
-     * @param payment betalning
-     * @return true om betalningen lyckades
-     */
     public boolean process(Payment payment) {
         try {
             boolean success = gateway.processPayment(payment);
