@@ -1,23 +1,42 @@
 package com.example.payment;
 
-//public class PaymentProcessor {
-//    private static final String API_KEY = "sk_test_123456";
-//
-//    public boolean processPayment(double amount) {
-//        // Anropar extern betaltjänst direkt med statisk API-nyckel
-//        PaymentApiResponse response = PaymentApi.charge(API_KEY, amount);
-//
-//        // Skriver till databas direkt
-//        if (response.isSuccess()) {
-//            DatabaseConnection.getInstance()
-//                    .executeUpdate("INSERT INTO payments (amount, status) VALUES (" + amount + ", 'SUCCESS')");
-//        }
-//
-//        // Skickar e-post direkt
-//        if (response.isSuccess()) {
-//            EmailService.sendPaymentConfirmation("user@example.com", amount);
-//        }
-//
-//        return response.isSuccess();
-//    }
-//}
+import com.example.NotificationException;
+import com.example.NotificationService;
+
+public class PaymentProcessor {
+
+    private final PaymentGateway gateway;
+    private final NotificationService notificationService;
+
+    public PaymentProcessor(PaymentGateway gateway, NotificationService notificationService) {
+        this.gateway = gateway;
+        this.notificationService = notificationService;
+    }
+
+    /**
+     * Processar en betalning via gateway.
+     *
+     * @param payment betalning
+     * @return true om betalningen lyckades
+     */
+    public boolean process(Payment payment) {
+        try {
+            boolean success = gateway.processPayment(payment);
+
+            if (success) {
+                notificationService.sendPaymentConfirmation(payment);
+            }
+
+            return success;
+        } catch (PaymentException e) {
+            System.out.println("Payment failed: " + e.getMessage());
+            return false;
+        } catch (NotificationException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    public boolean processPayment(Payment payment) {
+        return false;
+    }
+}

@@ -120,8 +120,8 @@ class BookingSystemTest {
     public static Stream<Arguments> invalidBookingTimes() {
         LocalDateTime now = LocalDateTime.now();
         return Stream.of(
-                Arguments.of(now.plusHours(2), now.plusHours(1)), // sluttid innan starttid
-                Arguments.of(now.minusHours(1), now.plusHours(1)) // starttid i dåtid
+                Arguments.of(now.plusHours(2), now.plusHours(1)),
+                Arguments.of(now.minusHours(1), now.plusHours(1))
         );
     }
 }
